@@ -188,7 +188,26 @@
         // Supabase 클라이언트 초기화
         const SUPABASE_URL = 'https://xhtsnezyzscfggrtaztr.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhodHNuZXp5enNjZmdncnRhenRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MzEyMDksImV4cCI6MjA4MjMwNzIwOX0.smtny3tZ3mGZea0yDrbP9xY2_3Uodhw0eaSPF31ITgc';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Supabase 라이브러리 로드 대기 및 클라이언트 생성
+        let supabaseClient;
+
+        // DOMContentLoaded 이벤트에서 초기화
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Supabase 라이브러리가 로드될 때까지 대기
+            if (typeof supabase === 'undefined') {
+                console.error('Supabase library not loaded');
+                alert('Supabase 라이브러리를 로드할 수 없습니다.');
+                return;
+            }
+
+            // createClient 함수 추출
+            const { createClient } = supabase;
+            supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+            // 초기 데이터 로드
+            await loadFromSupabase();
+        });
 
         const itemInput = document.getElementById('itemInput');
         const addButton = document.getElementById('addButton');
@@ -200,7 +219,7 @@
         // Supabase에서 데이터 로드
         async function loadFromSupabase() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('shopping_items')
                     .select('*')
                     .order('created_at', { ascending: true });
@@ -229,7 +248,7 @@
             }
 
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('shopping_items')
                     .insert([{ text: text, checked: false }])
                     .select();
@@ -252,7 +271,7 @@
         // 아이템 삭제
         async function deleteItem(id) {
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('shopping_items')
                     .delete()
                     .eq('id', id);
@@ -276,7 +295,7 @@
             if (!item) return;
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('shopping_items')
                     .update({ checked: !item.checked })
                     .eq('id', id);
@@ -347,9 +366,6 @@
                 addItem();
             }
         });
-
-        // 초기 로드
-        loadFromSupabase();
     </script>
 </body>
 </html>
